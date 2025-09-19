@@ -14,13 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout }) => {
     <nav className="navbar navbar-expand-lg navbar-dark sticky-top navbar-navy" style={{zIndex: 40}}>
       <div className="container-fluid">
         <Link to="/dashboard" className="navbar-brand d-flex align-items-center gap-2">
-          <span className="d-inline-flex align-items-center justify-content-center rounded" style={{width: 28, height: 28, background: 'linear-gradient(135deg,var(--primary-start),var(--primary-end))'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16" />
-              <path d="M9 7h1M9 11h1M14 7h1M14 11h1" />
-              <path d="M10 21v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
-            </svg>
-          </span>
+          <img src="/logo-mwsoo3a.png" alt="mwsoo3a logo" width={28} height={28} style={{ borderRadius: 6, objectFit: 'cover' }} />
           <strong>mwsoo3a</strong>
         </Link>
 
