@@ -26,11 +26,14 @@
   animation: float 4s ease-in-out infinite;
 }
 
-/* Background grid pattern */
-.bg-grid-pattern {
+/* Background dot pattern (renamed to avoid clash with App.css) */
+.bg-dot-pattern {
   background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
   background-size: 16px 16px;
 }
+
+/* Utility color matching purple icon intent */
+.text-purple { color: #6f42c1 !important; }
 
 /* Glass morphism effect */
 .glass {

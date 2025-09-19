@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import AuthModal from '../components/AuthModal'
+import { apiGet } from '../services/client'
 
 type Props = {
   onAuthenticated: () => void
@@ -12,8 +13,7 @@ const Welcome: React.FC<Props> = ({ onAuthenticated }) => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('http://localhost:4000/health')
-        const data = await response.json()
+        const data = await apiGet<{ status: string }>('/health')
         setHealthStatus(data.status)
       } catch {
         setHealthStatus('error - backend not connected')

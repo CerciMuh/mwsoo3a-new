@@ -43,3 +43,6 @@ export const storage = {
     localStorage.removeItem(key);
   },
 };
+
+// Deprecated helpers removed; not used.
+export {}

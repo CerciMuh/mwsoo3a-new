@@ -101,7 +101,9 @@ export async function signIn(email: string, password: string): Promise<SignInRes
 
 export function signOut(email: string) {
   const user = new CognitoUser({ Username: email, Pool: getUserPool() });
-  try { user.signOut(); } catch {}
+  try { user.signOut(); } catch {
+    /* ignore */
+  }
 }
 
 export async function forgotPassword(email: string): Promise<void> {

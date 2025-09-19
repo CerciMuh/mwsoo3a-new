@@ -25,7 +25,9 @@ function App() {
   }, [])
 
   const handleLogout = () => {
-    try { cognitoSignOut(localStorage.getItem('userEmail') || '') } catch {}
+    try { cognitoSignOut(localStorage.getItem('userEmail') || '') } catch {
+      /* ignore signOut errors */
+    }
     clearSession()
     setIsAuthenticated(false)
   }

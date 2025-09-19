@@ -17,7 +17,22 @@ const PORT = process.env.PORT || 4000;
 // APP_BASE_URL no longer needed (email verification removed)
 
 // Middleware
-app.use(cors());
+// Configure CORS: allow all in development, restrict in production via CORS_ORIGIN (comma-separated)
+const nodeEnv = process.env.NODE_ENV || 'development';
+const corsOriginEnv = process.env.CORS_ORIGIN;
+let corsOptions: cors.CorsOptions | undefined = undefined;
+if (nodeEnv === 'production' && corsOriginEnv) {
+  const allowed = corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean);
+  corsOptions = {
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow non-browser clients
+      if (allowed.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  };
+}
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Health check endpoint
@@ -98,7 +113,7 @@ app.get('/me/university', authenticateCognito, async (req, res) => {
         // Create a local record so we can assign university mapping by domain
         const domainMatch = await findUniversityByEmailDomain(ru.email).catch(() => null);
         const uniId = domainMatch ? domainMatch.id : null;
-        const result = queries.createUser.run(ru.email, 'cognito', uniId);
+        queries.createUser.run(ru.email, uniId);
         user = queries.findUserByEmail.get(ru.email);
       }
     } else if (ru?.userId) {
