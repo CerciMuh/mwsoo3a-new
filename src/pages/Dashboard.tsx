@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BASE_URL } from '../services/client';
 
 interface UserUniversity {
   university: {
@@ -28,7 +29,7 @@ const Dashboard: React.FC = () => {
 
         // Fetch user's university
         const idToken = localStorage.getItem('cognito_id_token') || undefined;
-        const universityResponse = await fetch('http://localhost:4000/me/university', {
+        const universityResponse = await fetch(`${BASE_URL}/me/university`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             ...(idToken ? { 'X-Id-Token': idToken } : {}),

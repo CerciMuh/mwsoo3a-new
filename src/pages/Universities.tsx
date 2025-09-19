@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiGet } from '../services/client';
 
 interface University {
   id: number;
@@ -20,14 +21,9 @@ const Universities: React.FC = () => {
   useEffect(() => {
     const fetchUniversities = async () => {
       try {
-        const response = await fetch('http://localhost:4000/universities');
-        if (response.ok) {
-          const data = await response.json();
-          setUniversities(data.universities);
-          setFilteredUniversities(data.universities);
-        } else {
-          setError('Failed to fetch universities');
-        }
+        const data = await apiGet<{ universities: University[] }>('/universities');
+        setUniversities(data.universities);
+        setFilteredUniversities(data.universities);
       } catch (err) {
         setError('Network error');
         console.error('Universities fetch error:', err);
