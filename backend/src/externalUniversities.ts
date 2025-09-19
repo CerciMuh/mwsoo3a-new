@@ -33,8 +33,14 @@ function resolveUniversitiesJsonPath(): string {
 
   const candidates = [
     path.resolve(process.cwd(), 'world_universities.json'),
+    // monorepo root (when running backend from repo root)
     path.resolve(__dirname, '..', '..', 'world_universities.json'),
+    // backend root (when deploying only backend folder)
     path.resolve(__dirname, '..', 'world_universities.json'),
+    // process.cwd with backend folder (some hosts set cwd to repo root)
+    path.resolve(process.cwd(), 'backend', 'world_universities.json'),
+    // dist co-located (in case copied beside compiled files)
+    path.resolve(__dirname, 'world_universities.json'),
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -68,15 +74,39 @@ async function loadDataset(): Promise<MappedUniversity[]> {
   if (datasetCache && Date.now() - datasetCache.ts < TTL_MS) {
     return datasetCache.data;
   }
-  const filePath = resolveUniversitiesJsonPath();
-  const content = await fs.promises.readFile(filePath, 'utf-8');
-  const json = JSON.parse(content) as unknown;
-  if (!Array.isArray(json)) {
-    throw new Error('Local universities JSON is not an array');
+  // Try local JSON first, then remote fallback
+  try {
+    const filePath = resolveUniversitiesJsonPath();
+    const content = await fs.promises.readFile(filePath, 'utf-8');
+    const json = JSON.parse(content) as unknown;
+    if (!Array.isArray(json)) {
+      throw new Error('Local universities JSON is not an array');
+    }
+    const data = mapAndDedupe(json as ExternalUniversity[]);
+    datasetCache = { data, ts: Date.now() };
+    return data;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[universities] Local JSON not available, attempting remote fallback...', err instanceof Error ? err.message : err);
+    const data = await loadDatasetFromRemote();
+    datasetCache = { data, ts: Date.now() };
+    return data;
   }
-  const data = mapAndDedupe(json as ExternalUniversity[]);
-  datasetCache = { data, ts: Date.now() };
-  return data;
+}
+
+async function loadDatasetFromRemote(): Promise<MappedUniversity[]> {
+  // Public dataset (Hipolabs) – returns array of universities
+  const url = 'https://universities.hipolabs.com/search';
+  // Use global fetch (Node 18+). Cast to any to avoid TS lib dependency differences.
+  const res: any = await (globalThis as any).fetch?.(url).catch(() => null);
+  if (!res || !res.ok) {
+    throw new Error('Failed to fetch universities dataset from remote');
+  }
+  const json = (await res.json()) as ExternalUniversity[];
+  if (!Array.isArray(json)) {
+    throw new Error('Remote universities JSON is not an array');
+  }
+  return mapAndDedupe(json);
 }
 
 export async function fetchAllUniversities(params: FetchParams = {}): Promise<MappedUniversity[]> {

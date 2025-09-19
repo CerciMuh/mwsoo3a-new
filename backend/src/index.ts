@@ -52,7 +52,7 @@ app.get('/universities', async (req, res) => {
   const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : undefined;
   try {
     const list = await fetchAllUniversities({ limit });
-    return res.json({ source: 'file', universities: list });
+    return res.json({ source: 'file-or-remote', universities: list });
   } catch (err) {
     console.error('Error fetching universities:', err);
     return res.status(500).json({ error: 'Internal server error' });
