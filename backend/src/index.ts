@@ -4,7 +4,7 @@ import cors from 'cors';
 import { initializeDatabase, createUserQueries } from './database';
 import { authenticateCognito } from './cognitoAuth';
 import { findUniversityByEmailDomain, getUniversityById } from './universityUtils';
-import { fetchAllUniversities, clearUniversitiesCache, updateExternalDataset } from './externalUniversities';
+import { fetchAllUniversities, clearUniversitiesCache, updateExternalDataset, getDatasetStatus } from './externalUniversities';
 
 // Initialize database on startup
 initializeDatabase();
@@ -43,6 +43,11 @@ app.use(express.json());
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Dataset diagnostics
+app.get('/universities/status', (_req, res) => {
+  res.json(getDatasetStatus());
 });
 
 // Get universities using external API first, fallback to local DB

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import https from 'https';
 
 export interface ExternalUniversity {
   name: string;
@@ -25,11 +26,23 @@ export interface FetchParams {
 
 // In-memory dataset cache (full list), plus TTL
 let datasetCache: { data: MappedUniversity[]; ts: number } | null = null;
+let lastSource: 'file' | 'remote' | null = null;
+let lastPath: string | null = null;
 const TTL_MS = 1000 * 60 * 60; // 1 hour
 
 function resolveUniversitiesJsonPath(): string {
   const envPath = process.env.UNIVERSITIES_JSON_PATH;
-  if (envPath && fs.existsSync(envPath)) return envPath;
+  if (envPath) {
+    const envCandidates = [
+      path.isAbsolute(envPath) ? envPath : '',
+      path.resolve(process.cwd(), envPath),
+      path.resolve(__dirname, envPath),
+      path.resolve(__dirname, '..', envPath),
+    ].filter(Boolean) as string[];
+    for (const p of envCandidates) {
+      if (fs.existsSync(p)) return p;
+    }
+  }
 
   const candidates = [
     path.resolve(process.cwd(), 'world_universities.json'),
@@ -41,6 +54,10 @@ function resolveUniversitiesJsonPath(): string {
     path.resolve(process.cwd(), 'backend', 'world_universities.json'),
     // dist co-located (in case copied beside compiled files)
     path.resolve(__dirname, 'world_universities.json'),
+    // common misspelling support
+    path.resolve(process.cwd(), 'world_uinversities.json'),
+    path.resolve(__dirname, '..', '..', 'world_uinversities.json'),
+    path.resolve(__dirname, '..', 'world_uinversities.json'),
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -78,18 +95,36 @@ async function loadDataset(): Promise<MappedUniversity[]> {
   try {
     const filePath = resolveUniversitiesJsonPath();
     const content = await fs.promises.readFile(filePath, 'utf-8');
-    const json = JSON.parse(content) as unknown;
+    // Safe JSON parse with minimal validation to avoid accidental code-like strings being eval'd by consumers
+    const trimmed = content.trim();
+    if (!trimmed.startsWith('[')) {
+      throw new Error('Universities JSON must be an array at top level');
+    }
+    let json: unknown;
+    try {
+      json = JSON.parse(trimmed);
+    } catch (e: any) {
+      throw new Error(`Failed to parse universities JSON: ${e?.message || String(e)}`);
+    }
     if (!Array.isArray(json)) {
       throw new Error('Local universities JSON is not an array');
     }
     const data = mapAndDedupe(json as ExternalUniversity[]);
     datasetCache = { data, ts: Date.now() };
+    lastSource = 'file';
+    lastPath = filePath;
     return data;
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[universities] Local JSON not available, attempting remote fallback...', err instanceof Error ? err.message : err);
+    const allowRemote = (process.env.UNIVERSITIES_ALLOW_REMOTE || '').toLowerCase() === '1' || (process.env.UNIVERSITIES_ALLOW_REMOTE || '').toLowerCase() === 'true';
+    if (!allowRemote) {
+      throw new Error('Universities dataset not found. Provide world_universities.json or set UNIVERSITIES_JSON_PATH. Remote fallback is disabled.');
+    }
     const data = await loadDatasetFromRemote();
     datasetCache = { data, ts: Date.now() };
+    lastSource = 'remote';
+    lastPath = null;
     return data;
   }
 }
@@ -98,15 +133,47 @@ async function loadDatasetFromRemote(): Promise<MappedUniversity[]> {
   // Public dataset (Hipolabs) – returns array of universities
   const url = 'https://universities.hipolabs.com/search';
   // Use global fetch (Node 18+). Cast to any to avoid TS lib dependency differences.
+  let json: ExternalUniversity[] | null = null;
   const res: any = await (globalThis as any).fetch?.(url).catch(() => null);
-  if (!res || !res.ok) {
-    throw new Error('Failed to fetch universities dataset from remote');
+  if (res && res.ok) {
+    json = (await res.json()) as ExternalUniversity[];
+  } else {
+    // Fallback to https.get for older Node runtimes without fetch
+    json = await new Promise<ExternalUniversity[]>((resolve, reject) => {
+      https.get(url, (r) => {
+        if (r.statusCode && r.statusCode >= 400) {
+          reject(new Error(`HTTP ${r.statusCode}`));
+          return;
+        }
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => {
+          try {
+            const body = Buffer.concat(chunks).toString('utf-8');
+            const parsed = JSON.parse(body);
+            resolve(parsed);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }).on('error', reject);
+    });
   }
-  const json = (await res.json()) as ExternalUniversity[];
   if (!Array.isArray(json)) {
     throw new Error('Remote universities JSON is not an array');
   }
   return mapAndDedupe(json);
+}
+
+export function getDatasetStatus() {
+  return {
+    source: lastSource,
+    path: lastPath,
+    count: datasetCache?.data.length || 0,
+    cachedAt: datasetCache?.ts || null,
+    ttlMs: TTL_MS,
+    expiresAt: datasetCache ? datasetCache.ts + TTL_MS : null,
+  };
 }
 
 export async function fetchAllUniversities(params: FetchParams = {}): Promise<MappedUniversity[]> {
