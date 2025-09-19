@@ -30,9 +30,14 @@ if (nodeEnv === 'production' && corsOriginEnv) {
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Authorization','X-Id-Token','Content-Type'],
+    optionsSuccessStatus: 204,
   };
 }
 app.use(cors(corsOptions));
+// Ensure preflight is handled
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Health check endpoint
