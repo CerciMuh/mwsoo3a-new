@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BASE_URL } from '../services/client';
+import { apiGetAuth } from '../services/client';
 
 interface UserUniversity {
   university: {
@@ -29,21 +29,8 @@ const Dashboard: React.FC = () => {
 
         // Fetch user's university
         const idToken = localStorage.getItem('cognito_id_token') || undefined;
-        const universityResponse = await fetch(`${BASE_URL}/me/university`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            ...(idToken ? { 'X-Id-Token': idToken } : {}),
-          },
-        });
-
-        if (universityResponse.ok) {
-          const universityData = await universityResponse.json();
-          setUserUniversity(universityData);
-        } else if (universityResponse.status === 401 || universityResponse.status === 403) {
-          setError('Unauthorized. Please sign in again.');
-        } else {
-          setError('Failed to fetch user university');
-        }
+        const universityData = await apiGetAuth<UserUniversity>('/me/university', token, idToken ? { 'X-Id-Token': idToken } : undefined);
+        setUserUniversity(universityData);
 
       } catch (err) {
         setError('Network error');
