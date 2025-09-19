@@ -21,9 +21,15 @@ const Universities: React.FC = () => {
   useEffect(() => {
     const fetchUniversities = async () => {
       try {
-        const data = await apiGet<{ universities: University[] }>('/universities');
-        setUniversities(data.universities);
-        setFilteredUniversities(data.universities);
+        // Accept both legacy array response and new object shape { universities: University[] }
+        const payload = await apiGet<any>('/universities');
+        const list: University[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.universities)
+          ? payload.universities
+          : [];
+        setUniversities(list);
+        setFilteredUniversities(list);
       } catch (err) {
         setError('Network error');
         console.error('Universities fetch error:', err);
@@ -59,7 +65,7 @@ const Universities: React.FC = () => {
   }, [universities, searchTerm, selectedCountry]);
 
   // Get unique countries for filter dropdown
-  const countries = Array.from(new Set(universities.map((uni) => uni.country))).sort();
+  const countries = Array.from(new Set((universities || []).map((uni) => uni.country))).sort();
 
   if (loading) {
     return (
