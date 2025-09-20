@@ -1,7 +1,12 @@
 // Minimal API client using VITE_API_BASE_URL
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const isDev = !!import.meta.env.DEV;
+const DEFAULT_DEV_BASE = 'http://localhost:4000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || (isDev ? DEFAULT_DEV_BASE : '');
 
 export async function apiGet<T = unknown>(path: string, init?: RequestInit): Promise<T> {
+  if (!BASE_URL) {
+    throw new Error('VITE_API_BASE_URL is not set; cannot call API in production');
+  }
   const url = `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   const res = await fetch(url, { ...init, method: 'GET' });
   const contentType = res.headers.get('content-type') || '';

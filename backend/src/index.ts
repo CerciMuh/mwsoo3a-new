@@ -36,8 +36,8 @@ if (nodeEnv === 'production' && corsOriginEnv) {
   };
 }
 app.use(cors(corsOptions));
-// Ensure preflight is handled
-app.options('*', cors(corsOptions));
+// Ensure preflight is handled (Express v5 + path-to-regexp v6: use '(.*)' for catch-all)
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 
 // Health check endpoint
