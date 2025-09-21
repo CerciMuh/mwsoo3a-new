@@ -1,16 +1,48 @@
 # MWSOO3A Project
 
-A full-stack web application with separate frontend and backend services.
+A modern web application built with **Clean Architecture** principles, featuring React 19 frontend and Node.js backend with strict **SOLID** compliance.
 
-## Features
+## 🏗️ Architecture Overview
+
+This project follows **Clean Architecture** patterns with complete separation of concerns:
+
+```
+📁 Project Structure
+├── frontend/          # React 19 + Vite + TypeScript (Clean Architecture)
+├── backend/          # Node.js + TypeScript (Clean Architecture)
+└── docs/             # Documentation and guides
+```
+
+### **Clean Architecture Layers**
+
+```
+🎯 Domain Layer (Core Business Logic)
+├── entities/          # Business entities with rules
+├── repositories/      # Abstract repository interfaces  
+└── services/         # Domain services
+
+🎯 Application Layer (Use Cases)
+└── useCases/         # Application-specific business rules
+
+🎯 Infrastructure Layer (External Concerns)
+├── repositories/     # Concrete repository implementations
+└── di/              # Dependency injection container
+
+🎯 Presentation Layer (HTTP Interface)
+├── controllers/     # Thin HTTP request handlers
+└── routes/         # API endpoint definitions
+```
+
+## ✨ Features
 
 - ⚡ **Vite** - Fast build tool and development server
 - ⚛️ **React 19** - Modern React with functional components and hooks
-- 🔷 **TypeScript** - Type safety and better developer experience
-- 🏗️ **Monorepo Structure** - Organized frontend and backend services
+- 🔷 **TypeScript** - Full type safety with strict configuration
+- 🏗️ **Clean Architecture** - SOLID principles implementation
 - 🎨 **Tailwind CSS** - Utility-first CSS framework
-- � **AWS Cognito** - Authentication and user management
+- 🔐 **AWS Cognito** - Authentication and user management
 - 📊 **SQLite Database** - Lightweight backend database
+- 🔄 **Dependency Injection** - IoC container for clean dependencies
 
 ## Project Structure
 
@@ -78,6 +110,7 @@ Navigate to the `frontend/` directory for React development:
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS + Bootstrap
+- **Static Assets**: Universities data located in `frontend/public/world_universities.json` for Vercel deployment
 - **Authentication**: AWS Cognito
 
 ## Backend Development

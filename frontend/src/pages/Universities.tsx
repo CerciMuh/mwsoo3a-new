@@ -21,13 +21,32 @@ const Universities: React.FC = () => {
   useEffect(() => {
     const fetchUniversities = async () => {
       try {
-        // Accept both legacy array response and new object shape { universities: University[] }
-        const payload = await apiGet<any>('/universities');
-        const list: University[] = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload?.universities)
-          ? payload.universities
-          : [];
+        let list: University[] = [];
+        
+        if (import.meta.env.DEV) {
+          // Development: use backend API
+          const payload = await apiGet<any>('/universities');
+          list = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.universities)
+            ? payload.universities
+            : [];
+        } else {
+          // Production: load from static JSON file
+          const response = await fetch('/world_universities.json');
+          const data = await response.json();
+          // Map the external format to our University interface
+          list = data.map((uni: any) => ({
+            id: uni.name + '_' + uni.country, // Generate an ID
+            name: uni.name,
+            country: uni.country,
+            domains: uni.domains || [],
+            web_pages: uni.web_pages || [],
+            alpha_two_code: uni.alpha_two_code,
+            'state-province': uni['state-province']
+          }));
+        }
+        
         setUniversities(list);
         setFilteredUniversities(list);
       } catch (err) {

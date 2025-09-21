@@ -1,66 +1,102 @@
-import 'dotenv/config';
+// Main Application Entry Point - Clean Architecture
 import express from 'express';
 import cors from 'cors';
-import { initializeDatabase } from './database';
-import { authenticateCognito } from './cognitoAuth';
-import { buildCorsOptions } from './config/cors';
-import { getHealth } from './controllers/healthController';
-import { listUniversities, refreshUniversitiesCache, searchUniversities, updateUniversities, getUniversitiesStatus } from './controllers/universitiesController';
-import { getMyUniversity } from './controllers/userController';
+import { createRoutes } from './presentation/routes';
+import { DIContainer } from './infrastructure/di/DIContainer';
 
-// Initialize database on startup
-initializeDatabase();
+class Application {
+  private app: express.Application;
+  private port: number;
+  private container: DIContainer;
 
-// Create user queries after database initialization (moved into controllers as needed)
+  constructor() {
+    this.app = express();
+    this.port = parseInt(process.env.PORT || '5000');
+    this.container = DIContainer.getInstance();
+    
+    this.initializeMiddleware();
+    this.initializeRoutes();
+    this.initializeErrorHandling();
+  }
 
-const app = express();
-const PORT = process.env.PORT || 4000;
-// APP_BASE_URL no longer needed (email verification removed)
+  private initializeMiddleware(): void {
+    // CORS configuration
+    this.app.use(cors({
+      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      credentials: true
+    }));
 
-// Middleware
-// Configure CORS via dedicated module
-const corsOptions = buildCorsOptions();
-app.use(cors(corsOptions));
-// Ensure preflight is handled (Express v5 + path-to-regexp v6: use '(.*)' for catch-all)
-app.options(/.*/, cors(corsOptions));
-app.use(express.json());
+    // Body parsing
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', getHealth);
+    // Request logging (in production, use a proper logger like Winston)
+    this.app.use((req, _res, next) => {
+      console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+      next();
+    });
+  }
 
-// Dataset diagnostics
-app.get('/universities/status', getUniversitiesStatus);
+  private initializeRoutes(): void {
+    // API routes
+    this.app.use('/api', createRoutes());
 
-// Get universities using external API first, fallback to local DB
-// Optional query: ?limit=1000
-app.get('/universities', listUniversities);
+    // 404 handler
+    this.app.use('*', (_req, res) => {
+      res.status(404).json({
+        success: false,
+        error: 'Route not found'
+      });
+    });
+  }
 
-// Clear external cache (manual refresh)
-app.post('/universities/refresh-cache', refreshUniversitiesCache);
+  private initializeErrorHandling(): void {
+    // Global error handler
+    this.app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      console.error('Unhandled error:', error);
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        ...(process.env.NODE_ENV === 'development' && { details: error.message })
+      });
+    });
+  }
 
-// Search endpoint matching examples: /search?name=Middle&country=Turkey&limit=1&offset=0
-app.get('/search', searchUniversities);
+  public start(): void {
+    this.app.listen(this.port, () => {
+      console.log(`🚀 Server running on port ${this.port}`);
+      console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+    });
+  }
 
-// Update endpoint to refresh external dataset and clear cache
-app.post('/update', updateUniversities);
-app.get('/update', updateUniversities);
+  public getExpressApp(): express.Application {
+    return this.app;
+  }
 
-// Get current user's university
-app.get('/me/university', authenticateCognito, getMyUniversity);
+  public async shutdown(): Promise<void> {
+    console.log('🛑 Shutting down server...');
+    this.container.cleanup();
+    console.log('✅ Cleanup completed');
+  }
+}
 
-// Removed legacy auth + email verification + SMTP diagnostics
+// Create and start application
+const app = new Application();
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log('✅ Authentication system enabled');
-  console.log('✅ University system enabled');
-  // Log Cognito env for diagnostics (partially masked)
-  const region = process.env.COGNITO_REGION;
-  const pool = process.env.COGNITO_USER_POOL_ID;
-  const client = process.env.COGNITO_CLIENT_ID;
-  const mask = (v?: string) => (v ? `${v.slice(0, 4)}...${v.slice(-4)}` : 'undefined');
-  console.log(`Cognito config -> REGION=${region}, USER_POOL_ID=${mask(pool)}, CLIENT_ID=${mask(client)}`);
+// Graceful shutdown handling
+process.on('SIGTERM', async () => {
+  await app.shutdown();
+  process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+  await app.shutdown();
+  process.exit(0);
+});
+
+// Start the server
+app.start();
 
 export default app;

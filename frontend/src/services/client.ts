@@ -1,6 +1,6 @@
 // Minimal API client using VITE_API_BASE_URL
 const isDev = !!import.meta.env.DEV;
-const DEFAULT_DEV_BASE = 'http://localhost:4000';
+const DEFAULT_DEV_BASE = 'http://localhost:5000'; // Changed from 4000 to 5000 for clean architecture backend
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || (isDev ? DEFAULT_DEV_BASE : '');
 
 export async function apiGet<T = unknown>(path: string, init?: RequestInit): Promise<T> {

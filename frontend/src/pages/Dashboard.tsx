@@ -27,10 +27,18 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        // Fetch user's university
-        const idToken = localStorage.getItem('cognito_id_token') || undefined;
-        const universityData = await apiGetAuth<UserUniversity>('/me/university', token, idToken ? { 'X-Id-Token': idToken } : undefined);
-        setUserUniversity(universityData);
+        if (import.meta.env.DEV) {
+          // Development: use backend API
+          const idToken = localStorage.getItem('cognito_id_token') || undefined;
+          const universityData = await apiGetAuth<UserUniversity>('/me/university', token, idToken ? { 'X-Id-Token': idToken } : undefined);
+          setUserUniversity(universityData);
+        } else {
+          // Production: show message that backend is needed
+          setUserUniversity({
+            university: null,
+            message: 'University detection requires backend deployment. Authentication works via Cognito.'
+          });
+        }
 
       } catch (err) {
         setError('Network error');

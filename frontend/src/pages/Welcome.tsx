@@ -13,8 +13,14 @@ const Welcome: React.FC<Props> = ({ onAuthenticated }) => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const data = await apiGet<{ status: string }>('/health')
-        setHealthStatus(data.status)
+        // Only check health in development
+        if (import.meta.env.DEV) {
+          const data = await apiGet<{ status: string }>('/health')
+          setHealthStatus(data.status)
+        } else {
+          // In production, skip backend health check
+          setHealthStatus('ok')
+        }
       } catch {
         setHealthStatus('error - backend not connected')
       }

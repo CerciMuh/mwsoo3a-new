@@ -1,0 +1,69 @@
+// Domain Services (Business Logic)
+import { User } from '../entities/User';
+import { University } from '../entities/University';
+import { IUserRepository, IUniversityRepository } from '../repositories/interfaces';
+
+export class UserDomainService {
+  constructor(
+    private userRepository: IUserRepository,
+    private universityRepository: IUniversityRepository
+  ) {}
+
+  public async findOrCreateUserByEmail(email: string): Promise<User> {
+    const existingUser = await this.userRepository.findByEmail(email);
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // Auto-assign university based on email domain
+    const emailParts = User.create(email).email.split('@');
+    const emailDomain = emailParts[1];
+    
+    if (!emailDomain) {
+      throw new Error('Invalid email format');
+    }
+    
+    const university = await this.findUniversityByEmailDomain(emailDomain);
+    
+    const userData = User.create(email, university?.id);
+    return await this.userRepository.create(userData);
+  }
+
+  public async getUserWithUniversity(userId: number): Promise<{ user: User; university: University | null }> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    let university: University | null = null;
+    if (user.hasUniversity()) {
+      university = await this.universityRepository.findById(user.universityId!);
+    }
+
+    return { user, university };
+  }
+
+  private async findUniversityByEmailDomain(emailDomain: string): Promise<University | null> {
+    // Direct match first
+    const directMatch = await this.universityRepository.findByDomain(emailDomain);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    // Subdomain matching (e.g., student.university.edu -> university.edu)
+    const allUniversities = await this.universityRepository.findAll();
+    
+    let bestMatch: { university: University; domainLength: number } | null = null;
+    
+    for (const university of allUniversities) {
+      if (university.matchesDomain(emailDomain)) {
+        const domainLength = university.domain.length;
+        if (!bestMatch || domainLength > bestMatch.domainLength) {
+          bestMatch = { university, domainLength };
+        }
+      }
+    }
+
+    return bestMatch?.university || null;
+  }
+}
