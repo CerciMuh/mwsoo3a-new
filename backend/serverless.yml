@@ -1,0 +1,46 @@
+service: mwsoo3a-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 15
+  environment:
+    NODE_ENV: production
+    FRONTEND_URL: ${env:FRONTEND_URL, 'https://your-vercel-domain'}
+    # For now keep SQLite path (local), will switch to Dynamo in Phase 2
+    DATABASE_PATH: ${env:DATABASE_PATH, '/tmp/dev.db'}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - ${env:FRONTEND_URL, 'https://your-vercel-domain'}
+        - http://localhost:5173
+        - http://localhost:5175
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Id-Token
+      allowedMethods:
+        - GET
+        - POST
+        - OPTIONS
+
+functions:
+  app:
+    handler: dist/handler.handler
+    events:
+      - httpApi:
+          method: ANY
+          path: /{proxy+}
+
+package:
+  patterns:
+    - dist/**
+    - node_modules/**
+
+plugins:
+  - serverless-offline
