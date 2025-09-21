@@ -41,6 +41,10 @@ backend/.env.production
 frontend/dist/
 backend/dist/
 
+# Serverless framework artifacts
+backend/.serverless/
+.serverless/
+
 # Database files
 backend/*.db
 backend/*.sqlite
