@@ -30,8 +30,9 @@ export class HttpUniversityRepository implements IUniversityRepository {
         throw new Error(`Failed to fetch universities: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data.data?.map((item: any) => University.fromApiResponse(item)) || [];
+      const apiResponse = await response.json();
+      return apiResponse.data?.map((item: any) => University.fromApiResponse(item)) || 
+             apiResponse?.map((item: any) => University.fromApiResponse(item)) || [];
     } catch (error) {
       console.error('Error fetching universities:', error);
       return [];
@@ -51,8 +52,9 @@ export class HttpUniversityRepository implements IUniversityRepository {
         throw new Error(`Failed to fetch university: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data.data ? University.fromApiResponse(data.data) : null;
+      const apiResponse = await response.json();
+      return apiResponse.data ? University.fromApiResponse(apiResponse.data) : 
+             (apiResponse.id ? University.fromApiResponse(apiResponse) : null);
     } catch (error) {
       console.error('Error fetching university by ID:', error);
       return null;

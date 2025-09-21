@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { apiGetAuth } from '../services/client';
+import { apiGetAuth, apiPostAuth } from '../services/client';
 
 interface UserUniversity {
-  university: {
-    id: number;
-    name: string;
-    country: string;
-    domain: string;
-  } | null;
+  success: boolean;
+  data: {
+    user: {
+      id: number;
+      email: string;
+      universityId: number;
+      createdAt: string;
+    };
+    university: {
+      id: number;
+      name: string;
+      country: string;
+      domain: string;
+    } | null;
+  };
   message?: string;
 }
 
@@ -29,13 +38,28 @@ const Dashboard: React.FC = () => {
 
         if (import.meta.env.DEV) {
           // Development: use backend API
+          const userEmail = localStorage.getItem('userEmail') || 'ali.almuhtaseb@student.manchester.ac.uk';
           const idToken = localStorage.getItem('cognito_id_token') || undefined;
-          const universityData = await apiGetAuth<UserUniversity>('/me/university', token, idToken ? { 'X-Id-Token': idToken } : undefined);
+          
+          // First authenticate/create user to get user ID
+          const authResponse = await apiPostAuth<{success: boolean, data: {user: {id: number}, university: any, isNewUser: boolean}}>(
+            '/api/users/authenticate', 
+            token, 
+            { email: userEmail },
+            idToken ? { 'X-Id-Token': idToken } : undefined
+          );
+          
+          // Then get dashboard data using the user ID
+          const universityData = await apiGetAuth<UserUniversity>(`/api/users/${authResponse.data.user.id}/dashboard`, token, idToken ? { 'X-Id-Token': idToken } : undefined);
           setUserUniversity(universityData);
         } else {
           // Production: show message that backend is needed
           setUserUniversity({
-            university: null,
+            success: true,
+            data: {
+              user: { id: 0, email: '', universityId: 0, createdAt: '' },
+              university: null
+            },
             message: 'University detection requires backend deployment. Authentication works via Cognito.'
           });
         }
@@ -102,11 +126,11 @@ const Dashboard: React.FC = () => {
               {/* University */}
               <div className="col-md-6">
                 <label className="form-label small text-muted">University</label>
-                {userUniversity?.university ? (
+                {userUniversity?.data?.university ? (
                   <div>
-                    <div className="fw-semibold">{userUniversity.university.name}</div>
-                    <div className="text-muted small">{userUniversity.university.country}</div>
-                    <div className="text-muted small">Domain: {userUniversity.university.domain}</div>
+                    <div className="fw-semibold">{userUniversity.data.university.name}</div>
+                    <div className="text-muted small">{userUniversity.data.university.country}</div>
+                    <div className="text-muted small">Domain: {userUniversity.data.university.domain}</div>
                   </div>
                 ) : (
                   <div>
@@ -153,7 +177,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="col-md-4">
             <div className="card text-center p-3 border-0 shadow-sm glass-card hover-lift">
-              <div className="fs-4 fw-bold" style={{color:'#7c3aed'}}>{userUniversity?.university ? '1' : '0'}</div>
+              <div className="fs-4 fw-bold" style={{color:'#7c3aed'}}>{userUniversity?.data?.university ? '1' : '0'}</div>
               <div className="text-muted small mt-1">University Assigned</div>
             </div>
           </div>

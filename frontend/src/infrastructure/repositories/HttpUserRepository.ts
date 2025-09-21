@@ -37,7 +37,8 @@ export class HttpUserRepository implements IUserRepository {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const apiResponse = await response.json();
+        const data = apiResponse.data || apiResponse; // Handle both old and new format
         const university = data.university ? University.fromApiResponse(data.university) : null;
         return { user, university };
       }
@@ -70,7 +71,8 @@ export class HttpUserRepository implements IUserRepository {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const apiResponse = await response.json();
+        const data = apiResponse.data || apiResponse; // Handle both old and new format
         const university = data.university ? University.fromApiResponse(data.university) : null;
         return { user, university, isNewUser: data.isNewUser || false };
       }

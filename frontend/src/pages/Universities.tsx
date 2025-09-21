@@ -25,26 +25,46 @@ const Universities: React.FC = () => {
         
         if (import.meta.env.DEV) {
           // Development: use backend API
-          const payload = await apiGet<any>('/universities');
-          list = Array.isArray(payload)
+          const payload = await apiGet<any>('/api/universities');
+          // Backend returns { success: true, data: UniversityDTO[], meta: {...} }
+          const items = Array.isArray(payload?.data)
+            ? payload.data
+            : Array.isArray(payload)
             ? payload
             : Array.isArray(payload?.universities)
             ? payload.universities
             : [];
+
+          list = items.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            country: u.country,
+            // Prefer single domain attribute; fallback to first in domains array
+            domain: u.domain ?? (Array.isArray(u.domains) && u.domains.length > 0 ? u.domains[0] : ''),
+          } as University));
         } else {
           // Production: load from static JSON file
           const response = await fetch('/world_universities.json');
           const data = await response.json();
           // Map the external format to our University interface
+          const toNumberId = (name: string, country: string) => {
+            // Simple deterministic hash to number for demo purposes
+            const s = `${name}::${country}`;
+            let hash = 0;
+            for (let i = 0; i < s.length; i++) {
+              hash = ((hash << 5) - hash) + s.charCodeAt(i);
+              hash |= 0; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+          };
+
           list = data.map((uni: any) => ({
-            id: uni.name + '_' + uni.country, // Generate an ID
+            id: toNumberId(uni.name, uni.country),
             name: uni.name,
             country: uni.country,
-            domains: uni.domains || [],
-            web_pages: uni.web_pages || [],
-            alpha_two_code: uni.alpha_two_code,
-            'state-province': uni['state-province']
-          }));
+            // Set a single domain string for filtering/display
+            domain: Array.isArray(uni.domains) && uni.domains.length > 0 ? uni.domains[0] : '',
+          } as University));
         }
         
         setUniversities(list);

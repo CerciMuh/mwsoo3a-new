@@ -15,8 +15,8 @@ const Welcome: React.FC<Props> = ({ onAuthenticated }) => {
       try {
         // Only check health in development
         if (import.meta.env.DEV) {
-          const data = await apiGet<{ status: string }>('/health')
-          setHealthStatus(data.status)
+          const response = await apiGet<{ success: boolean; data: { status: string } }>('/api/health')
+          setHealthStatus(response.data.status === 'healthy' ? 'ok' : response.data.status)
         } else {
           // In production, skip backend health check
           setHealthStatus('ok')

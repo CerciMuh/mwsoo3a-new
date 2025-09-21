@@ -1,5 +1,6 @@
 // Dependency Injection Container
 import Database from 'better-sqlite3';
+import * as fs from 'fs';
 import * as path from 'path';
 
 // Domain Services
@@ -44,8 +45,7 @@ export class DIContainer {
     const userRepository: IUserRepository = new SqliteUserRepository(database);
     this.services.set('userRepository', userRepository);
 
-    const universitiesDataPath = process.env.UNIVERSITIES_DATA_PATH || 
-      path.join(__dirname, '../../../world_universities.json');
+    const universitiesDataPath = this.resolveUniversitiesDataPath();
     const universityRepository: IUniversityRepository = new JsonUniversityRepository(universitiesDataPath);
     this.services.set('universityRepository', universityRepository);
 
@@ -101,5 +101,34 @@ export class DIContainer {
     if (database) {
       database.close();
     }
+  }
+
+  private resolveUniversitiesDataPath(): string {
+    const envPath = process.env.UNIVERSITIES_DATA_PATH || process.env.UNIVERSITIES_JSON_PATH;
+    const candidatePaths: string[] = [];
+
+    if (envPath) {
+      if (path.isAbsolute(envPath)) {
+        candidatePaths.push(envPath);
+      } else {
+        candidatePaths.push(path.resolve(process.cwd(), envPath));
+        candidatePaths.push(path.resolve(__dirname, '../../../', envPath));
+      }
+    }
+
+    // Default locations to try when env vars are not provided
+    candidatePaths.push(path.resolve(process.cwd(), 'world_universities.json'));
+    candidatePaths.push(path.resolve(process.cwd(), '../world_universities.json'));
+    candidatePaths.push(path.resolve(process.cwd(), '../frontend/public/world_universities.json'));
+    candidatePaths.push(path.resolve(__dirname, '../../../world_universities.json'));
+    candidatePaths.push(path.resolve(__dirname, '../../../../frontend/public/world_universities.json'));
+
+    const resolvedPath = candidatePaths.find(candidate => fs.existsSync(candidate));
+
+    if (!resolvedPath) {
+      throw new Error(`University data file not found. Checked paths: ${candidatePaths.join(', ')}`);
+    }
+
+    return resolvedPath;
   }
 }
