@@ -48,6 +48,8 @@ function resolveUniversitiesJsonPath(): string {
     path.resolve(process.cwd(), 'world_universities.json'),
     // monorepo root (when running backend from repo root)
     path.resolve(__dirname, '..', '..', 'world_universities.json'),
+    // frontend/public (for Vercel deployment)
+    path.resolve(__dirname, '..', '..', 'frontend', 'public', 'world_universities.json'),
     // backend root (when deploying only backend folder)
     path.resolve(__dirname, '..', 'world_universities.json'),
     // process.cwd with backend folder (some hosts set cwd to repo root)

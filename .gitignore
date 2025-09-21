@@ -28,7 +28,20 @@ dist-ssr
 .env.local
 .env.development
 .env.production
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production
 backend/.env
 backend/.env.local
 backend/.env.development
 backend/.env.production
+
+# Build outputs
+frontend/dist/
+backend/dist/
+
+# Database files
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3

@@ -14,5 +14,3 @@ import { Buffer } from 'buffer'
 if (!(globalThis as any).crypto && (window as any).msCrypto) {
   ;(globalThis as any).crypto = (window as any).msCrypto
 }
-
-export {}

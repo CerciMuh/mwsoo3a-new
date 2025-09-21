@@ -1,51 +1,92 @@
-# React + TypeScript + Vite Project
+# MWSOO3A Project
 
-A modern React application built with Vite and TypeScript, structured for scalability and future backend integration.
+A full-stack web application with separate frontend and backend services.
 
 ## Features
 
 - ⚡ **Vite** - Fast build tool and development server
-- ⚛️ **React 18** - Modern React with functional components and hooks
+- ⚛️ **React 19** - Modern React with functional components and hooks
 - 🔷 **TypeScript** - Type safety and better developer experience
-- 🏗️ **Structured Architecture** - Organized for future backend integration
-- 🎨 **CSS Modules** - Scoped styling support
-- 🔧 **ESLint** - Code linting and formatting
+- 🏗️ **Monorepo Structure** - Organized frontend and backend services
+- 🎨 **Tailwind CSS** - Utility-first CSS framework
+- � **AWS Cognito** - Authentication and user management
+- 📊 **SQLite Database** - Lightweight backend database
 
 ## Project Structure
 
 ```
-src/
-├── components/     # Reusable UI components
-├── pages/         # Page-level components
-├── services/      # API services (ready for backend)
-├── types/         # TypeScript type definitions
-├── utils/         # Utility functions
-├── hooks/         # Custom React hooks
-├── App.tsx        # Main application component
-└── main.tsx       # Application entry point
+mwsoo3a-new/
+├── frontend/          # React + Vite + TypeScript frontend
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/         # Page-level components
+│   │   ├── services/      # API services
+│   │   ├── types/         # TypeScript type definitions
+│   │   ├── utils/         # Utility functions
+│   │   ├── hooks/         # Custom React hooks
+│   │   └── auth/          # Authentication logic
+│   ├── public/        # Static assets
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/           # Node.js + Express + SQLite backend
+│   ├── src/
+│   │   ├── controllers/   # API route handlers
+│   │   ├── config/        # Configuration files
+│   │   └── scripts/       # Utility scripts
+│   ├── package.json
+│   └── tsconfig.json
+├── docs/              # Project documentation
+└── package.json       # Root workspace configuration
 ```
 
 ## Getting Started
 
-1. **Install dependencies:**
+### Prerequisites
+- Node.js (v18 or higher)
+- npm
+
+### Installation & Development
+
+1. **Install dependencies for all packages:**
    ```bash
-   npm install
+   npm run install:all
    ```
 
-2. **Start development server:**
+2. **Start both frontend and backend in development mode:**
    ```bash
    npm run dev
    ```
 
-3. **Build for production:**
+3. **Or start them separately:**
+   ```bash
+   # Frontend only (http://localhost:5173)
+   npm run dev:frontend
+
+   # Backend only (http://localhost:3000)
+   npm run dev:backend
+   ```
+
+4. **Build for production:**
    ```bash
    npm run build
    ```
 
-4. **Preview production build:**
-   ```bash
-   npm run preview
-   ```
+## Frontend Development
+
+Navigate to the `frontend/` directory for React development:
+- **Port**: 5173 (development)
+- **Framework**: React 19 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + Bootstrap
+- **Authentication**: AWS Cognito
+
+## Backend Development
+
+Navigate to the `backend/` directory for API development:
+- **Port**: 3000 (default)
+- **Framework**: Express.js with TypeScript
+- **Database**: SQLite with better-sqlite3
+- **Authentication**: AWS Cognito JWT verification
 
 ## Environment Configuration
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { signUp as cognitoSignUp, confirmSignUp as cognitoConfirm, resendConfirmationCode, signIn as cognitoSignIn, forgotPassword as cognitoForgot, confirmForgotPassword as cognitoConfirmForgot } from '../auth/cognitoCustom'
+import { signUp as cognitoSignUp, confirmSignUp as cognitoConfirm, resendConfirmationCode, signIn as cognitoSignIn, forgotPassword as cognitoForgot, confirmForgotPassword as cognitoConfirmForgot, isCognitoConfigured } from '../auth/cognitoCustom'
 import { setSessionChanged } from '../auth/session'
 
 type Mode = 'login' | 'register' | 'confirm' | 'forgot' | 'reset'
@@ -145,7 +145,18 @@ export default function AuthModal({ show, onClose, onSuccess }: Props) {
           <div className="modal-body">
             {msg && <div className={`alert alert-${msg.type} mb-3`}>{msg.text}</div>}
 
-            {mode === 'register' && (
+            {!isCognitoConfigured() && (
+              <div className="alert alert-warning mb-3">
+                <strong>Configuration Required:</strong> AWS Cognito environment variables are not configured. 
+                Please create a <code>.env.local</code> file in the frontend directory with your Cognito settings.
+                <br />
+                <small className="text-muted">
+                  See <code>.env.example</code> for required variables.
+                </small>
+              </div>
+            )}
+
+            {isCognitoConfigured() && mode === 'register' && (
               <form onSubmit={handleRegister}>
                 <div className="row g-2">
                   <div className="col-md-6">
@@ -179,7 +190,7 @@ export default function AuthModal({ show, onClose, onSuccess }: Props) {
               </form>
             )}
 
-            {mode === 'confirm' && (
+            {isCognitoConfigured() && mode === 'confirm' && (
               <form onSubmit={handleConfirm}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -197,7 +208,7 @@ export default function AuthModal({ show, onClose, onSuccess }: Props) {
               </form>
             )}
 
-            {mode === 'login' && (
+            {isCognitoConfigured() && mode === 'login' && (
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -220,7 +231,7 @@ export default function AuthModal({ show, onClose, onSuccess }: Props) {
               </form>
             )}
 
-            {mode === 'forgot' && (
+            {isCognitoConfigured() && mode === 'forgot' && (
               <form onSubmit={handleForgot}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>
@@ -233,7 +244,7 @@ export default function AuthModal({ show, onClose, onSuccess }: Props) {
               </form>
             )}
 
-            {mode === 'reset' && (
+            {isCognitoConfigured() && mode === 'reset' && (
               <form onSubmit={handleReset}>
                 <div className="mb-3">
                   <label className="form-label">Email</label>

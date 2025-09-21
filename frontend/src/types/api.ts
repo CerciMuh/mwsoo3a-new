@@ -28,6 +28,3 @@ export interface ApiError {
   status: number;
   code?: string;
 }
-
-// Deprecated API types removed; not used.
-export {}
