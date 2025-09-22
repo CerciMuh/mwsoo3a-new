@@ -1,5 +1,4 @@
 // Dependency Injection Container
-import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,7 +13,7 @@ import {
 } from '../../application/useCases';
 
 // Infrastructure
-import { SqliteUserRepository } from '../repositories/SqliteUserRepository';
+import { DynamoDbUserRepository } from '../repositories/DynamoDbUserRepository';
 import { JsonUniversityRepository } from '../repositories/JsonUniversityRepository';
 
 // Repository Interfaces
@@ -36,13 +35,8 @@ export class DIContainer {
   }
 
   private initializeServices(): void {
-    // Database
-    const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../dev.db');
-    const database = new Database(dbPath);
-    this.services.set('database', database);
-
-    // Repositories
-    const userRepository: IUserRepository = new SqliteUserRepository(database);
+    // Use DynamoDB for Users in all environments
+    const userRepository: IUserRepository = new DynamoDbUserRepository(process.env.DYNAMO_USERS_TABLE || 'Users');
     this.services.set('userRepository', userRepository);
 
     const universitiesDataPath = this.resolveUniversitiesDataPath();
@@ -97,10 +91,7 @@ export class DIContainer {
   }
 
   public cleanup(): void {
-    const database = this.services.get('database') as Database.Database;
-    if (database) {
-      database.close();
-    }
+    // No-op: using DynamoDB which does not require explicit cleanup
   }
 
   private resolveUniversitiesDataPath(): string {
@@ -125,10 +116,7 @@ export class DIContainer {
 
     const resolvedPath = candidatePaths.find(candidate => fs.existsSync(candidate));
 
-    if (!resolvedPath) {
-      throw new Error(`University data file not found. Checked paths: ${candidatePaths.join(', ')}`);
-    }
-
-    return resolvedPath;
+    // If not found, return empty string; repository will handle absence gracefully
+    return resolvedPath || '';
   }
 }

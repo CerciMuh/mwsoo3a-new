@@ -22,6 +22,12 @@ export class JsonUniversityRepository implements IUniversityRepository {
     if (this.dataLoaded) return;
 
     try {
+      if (!this.dataFilePath || !fs.existsSync(this.dataFilePath)) {
+        // File not present in Lambda package; proceed with empty dataset
+        this.universities = [];
+        this.dataLoaded = true;
+        return;
+      }
       const data = fs.readFileSync(this.dataFilePath, 'utf-8');
       const universityData: UniversityData[] = JSON.parse(data);
       
@@ -39,7 +45,9 @@ export class JsonUniversityRepository implements IUniversityRepository {
       
       this.dataLoaded = true;
     } catch (error) {
-      throw new Error(`Failed to load university data: ${error}`);
+      console.warn('Failed to load university data, continuing with empty dataset:', error);
+      this.universities = [];
+      this.dataLoaded = true;
     }
   }
 
