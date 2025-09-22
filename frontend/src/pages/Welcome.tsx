@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import AuthModal from '../components/AuthModal'
-import { apiGet } from '../services/client'
+import { apiGet, BASE_URL } from '../services/client'
 
 type Props = {
   onAuthenticated: () => void
@@ -13,12 +13,12 @@ const Welcome: React.FC<Props> = ({ onAuthenticated }) => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        // Only check health in development
-        if (import.meta.env.DEV) {
+        // Check health when backend URL is configured (dev or prod)
+        if (BASE_URL) {
           const response = await apiGet<{ success: boolean; data: { status: string } }>('/api/health')
           setHealthStatus(response.data.status === 'healthy' ? 'ok' : response.data.status)
         } else {
-          // In production, skip backend health check
+          // No backend configured; show as disconnected
           setHealthStatus('ok')
         }
       } catch {

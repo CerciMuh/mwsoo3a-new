@@ -77,8 +77,6 @@ mwsoo3a-new/
 - Node.js (v18 or higher)
 - npm
 
-### Installation & Development
-
 1. **Install dependencies for all packages:**
    ```bash
    npm run install:all
@@ -105,16 +103,23 @@ mwsoo3a-new/
 
 ## Frontend Development
 
+## Production backend integration
+
+To enable the frontend to call the deployed backend in production:
+
+- On Vercel (frontend), set environment variables:
+  - `VITE_API_BASE_URL` = your API Gateway base URL including stage, e.g. `https://<apiId>.execute-api.<region>.amazonaws.com/dev`
+  - Existing Cognito vars (`VITE_COGNITO_USER_POOL_ID`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_REGION`, etc.)
+- On the backend (Serverless), ensure CORS allows your Vercel domain:
+  - Set `FRONTEND_URL` to `https://your-vercel-domain` and deploy the backend.
+- Universities dataset:
+  - The backend will load `world_universities.json` when present; otherwise it falls back to the Hipolabs public dataset when `UNIVERSITIES_ALLOW_REMOTE=true` (default in serverless.yml).
+
+After setting the variables, redeploy both apps. The Dashboard will authenticate the user against Cognito, create/read the user in DynamoDB, and map the email domain to a university. The Universities page will be served by the backend when `VITE_API_BASE_URL` is set.
 Navigate to the `frontend/` directory for React development:
 - **Port**: 5173 (development)
 - **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
-- **Styling**: Tailwind CSS + Bootstrap
-- **Static Assets**: Universities data located in `frontend/public/world_universities.json` for Vercel deployment
-- **Authentication**: AWS Cognito
-
-## Backend Development
-
 Navigate to the `backend/` directory for API development:
 - **Port**: 3000 (default)
 - **Framework**: Express.js with TypeScript

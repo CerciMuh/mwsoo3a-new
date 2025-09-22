@@ -11,7 +11,7 @@ provider:
   timeout: 15
   environment:
     NODE_ENV: production
-    FRONTEND_URL: ${env:FRONTEND_URL, 'https://your-vercel-domain'}
+    FRONTEND_URL: ${env:FRONTEND_URL, 'https://mwsoo3a-new.vercel.app'}
     DYNAMO_USERS_TABLE: ${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}
   iam:
     role:
@@ -31,7 +31,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - ${env:FRONTEND_URL, 'https://your-vercel-domain'}
+        - ${env:FRONTEND_URL, 'https://mwsoo3a-new.vercel.app'}
         - http://localhost:5173
         - http://localhost:5175
       allowedHeaders:
@@ -61,6 +61,10 @@ custom:
     concurrency: 10
     tsconfig: ./tsconfig.json
     exclude: []
+
+package:
+  patterns:
+    - world_universities.json
 
 resources:
   Resources:

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiGetAuth, apiPostAuth } from '../services/client';
+import { apiGetAuth, apiPostAuth, BASE_URL } from '../services/client';
 
 interface UserUniversity {
   success: boolean;
@@ -36,8 +36,9 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        if (import.meta.env.DEV) {
-          // Development: use backend API
+        const useBackend = !!BASE_URL;
+        if (useBackend) {
+          // Use backend API when a base URL is configured (dev or prod)
           const userEmail = localStorage.getItem('userEmail') || 'ali.almuhtaseb@student.manchester.ac.uk';
           const idToken = localStorage.getItem('cognito_id_token') || undefined;
           
@@ -53,7 +54,7 @@ const Dashboard: React.FC = () => {
           const universityData = await apiGetAuth<UserUniversity>(`/api/users/${authResponse.data.user.id}/dashboard`, token, idToken ? { 'X-Id-Token': idToken } : undefined);
           setUserUniversity(universityData);
         } else {
-          // Production: show message that backend is needed
+          // Fallback: show message that backend is needed (no BASE_URL configured)
           setUserUniversity({
             success: true,
             data: {

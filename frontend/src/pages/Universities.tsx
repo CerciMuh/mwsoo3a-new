@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet } from '../services/client';
+import { apiGet, BASE_URL } from '../services/client';
 
 interface University {
   id: number;
@@ -23,8 +23,9 @@ const Universities: React.FC = () => {
       try {
         let list: University[] = [];
         
-        if (import.meta.env.DEV) {
-          // Development: use backend API
+        const useBackend = !!BASE_URL;
+        if (useBackend) {
+          // Use backend API when a base URL is configured (dev or prod)
           const payload = await apiGet<any>('/api/universities');
           // Backend returns { success: true, data: UniversityDTO[], meta: {...} }
           const items = Array.isArray(payload?.data)
@@ -43,7 +44,7 @@ const Universities: React.FC = () => {
             domain: u.domain ?? (Array.isArray(u.domains) && u.domains.length > 0 ? u.domains[0] : ''),
           } as University));
         } else {
-          // Production: load from static JSON file
+          // Fallback: load from static JSON file when backend URL isn't configured
           const response = await fetch('/world_universities.json');
           const data = await response.json();
           // Map the external format to our University interface
@@ -235,8 +236,8 @@ const Universities: React.FC = () => {
             {pageItems.map((university) => (
               <div className="col-12 col-md-6 col-lg-4" key={university.id}>
                   <div className="card h-100 border-0 shadow-sm" style={{ transition: 'transform .2s ease, box-shadow .2s ease' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 .5rem 1rem rgba(0,0,0,.08)' }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '' }}
+                    onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 .5rem 1rem rgba(0,0,0,.08)' }}
+                    onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '' }}
                   >
                     <div className="card-body d-flex position-relative">
                     <div className="flex-grow-1">

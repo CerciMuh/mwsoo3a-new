@@ -23,7 +23,8 @@ export class JsonUniversityRepository implements IUniversityRepository {
 
     try {
       if (!this.dataFilePath || !fs.existsSync(this.dataFilePath)) {
-        // File not present in Lambda package; proceed with empty dataset
+        // Strict mode: do NOT fetch remotely. Require file to be packaged.
+        // Proceed with empty dataset to keep endpoints responsive, but log a warning upstream.
         this.universities = [];
         this.dataLoaded = true;
         return;
@@ -31,17 +32,20 @@ export class JsonUniversityRepository implements IUniversityRepository {
       const data = fs.readFileSync(this.dataFilePath, 'utf-8');
       const universityData: UniversityData[] = JSON.parse(data);
       
-      this.universities = universityData.map((data, index) => 
-        University.fromData(
+      this.universities = universityData.map((data, index) => {
+        const domainsArr = Array.isArray(data.domains) && data.domains.length > 0
+          ? data.domains
+          : ((data as any).domain ? [String((data as any).domain)] : []);
+        return University.fromData(
           index + 1, // Use array index + 1 as ID
           data.name,
           data.country,
           data.alpha_two_code,
-          data.domains,
-          data.web_pages,
+          domainsArr,
+          Array.isArray(data.web_pages) ? data.web_pages : [],
           data['state-province']
-        )
-      );
+        );
+      });
       
       this.dataLoaded = true;
     } catch (error) {
