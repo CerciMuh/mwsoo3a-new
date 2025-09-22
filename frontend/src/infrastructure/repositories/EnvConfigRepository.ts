@@ -14,7 +14,7 @@ export class EnvConfigRepository implements IConfigRepository {
     clientId: string;
   } {
     return {
-      region: import.meta.env.VITE_AWS_REGION || 'us-east-1',
+      region: import.meta.env.VITE_COGNITO_REGION || 'us-east-1',
       userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || '',
       clientId: import.meta.env.VITE_COGNITO_CLIENT_ID || ''
     };
