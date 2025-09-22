@@ -163,3 +163,27 @@ The project is structured for easy backend integration:
   },
 ])
 ```
+
+flowchart TD
+    A[User Browser] -->|HTTP/HTTPS| B[Frontend (React + Vite)]
+    B -->|API Calls /api/*| C[API Gateway (HTTP API)]
+    C --> D[Lambda (Node.js 18 + Express via serverless-http)]
+    D -->|User Data| E[(DynamoDB Users Table)]
+    D -->|University Data| F[JSON Dataset (world_universities.json)]
+
+    subgraph Frontend
+        B1[Components] 
+        B2[Pages]
+        B3[Services API Client]
+        B4[Cognito Auth (stub)]
+        B1 --> B2 --> B3
+        B3 --> B4
+    end
+
+    subgraph Backend
+        D1[Presentation: Controllers & Routes]
+        D2[Application: Use Cases]
+        D3[Domain: Entities]
+        D4[Infrastructure: DynamoDB & JSON Repositories]
+        D1 --> D2 --> D3 --> D4
+    end
