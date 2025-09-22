@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { createRoutes } from './presentation/routes';
+import { HealthController } from './presentation/controllers/HealthController';
 
 export function createApp(): express.Application {
   const app = express();
@@ -25,6 +26,16 @@ export function createApp(): express.Application {
   // Lightweight liveness endpoint outside of /api to isolate issues
   app.get('/ping', (_req, res) => {
     res.status(200).json({ ok: true, ts: new Date().toISOString() });
+  });
+
+  // Direct health endpoints (bypass router/DI)
+  const healthController = new HealthController();
+  app.get('/api/health', healthController.checkHealth);
+  app.get('/api/ready', healthController.checkReadiness);
+
+  // Ultra-simple inline healthz to isolate issues (no imports/DI involved)
+  app.get('/api/healthz', (_req, res) => {
+    res.status(200).json({ success: true, data: { status: 'healthy', via: 'inline', ts: new Date().toISOString() } });
   });
 
   // API routes

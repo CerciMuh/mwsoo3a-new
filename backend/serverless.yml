@@ -12,8 +12,22 @@ provider:
   environment:
     NODE_ENV: production
     FRONTEND_URL: ${env:FRONTEND_URL, 'https://your-vercel-domain'}
-    # For now keep SQLite path (local), will switch to Dynamo in Phase 2
-    DATABASE_PATH: ${env:DATABASE_PATH, '/tmp/dev.db'}
+    DYNAMO_USERS_TABLE: ${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}/index/email-index
   httpApi:
     cors:
       allowedOrigins:
@@ -31,16 +45,54 @@ provider:
 
 functions:
   app:
-    handler: dist/handler.handler
+    handler: src/handler.handler
     events:
       - httpApi:
           method: ANY
           path: /{proxy+}
 
-package:
-  patterns:
-    - dist/**
-    - node_modules/**
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    target: node18
+    platform: node
+    concurrency: 10
+    tsconfig: ./tsconfig.json
+    exclude: []
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: email-index
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+  Outputs:
+    UsersTableName:
+      Value: ${env:DYNAMO_USERS_TABLE, 'Users-${sls:stage}'}
+      Export:
+        Name: ${sls:stage}-UsersTableName
+
+
 
 plugins:
+  - serverless-esbuild
   - serverless-offline
