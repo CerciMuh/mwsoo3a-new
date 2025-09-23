@@ -51,21 +51,11 @@ export class UserController {
 
   public getUserDashboard = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userIdParam = req.params.userId;
-      if (!userIdParam) {
+      const userId = req.params.userId;
+      if (!userId) {
         res.status(400).json({ 
           success: false, 
           error: 'User ID parameter is required' 
-        });
-        return;
-      }
-
-      const userId = parseInt(userIdParam);
-
-      if (isNaN(userId)) {
-        res.status(400).json({ 
-          success: false, 
-          error: 'Invalid user ID' 
         });
         return;
       }

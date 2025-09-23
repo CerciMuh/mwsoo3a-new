@@ -63,7 +63,7 @@ export class GetUniversitiesUseCase {
 export class GetUserDashboardUseCase {
   constructor(private userDomainService: UserDomainService) {}
 
-  public async execute(userId: number): Promise<{ user: User; university: University | null }> {
+  public async execute(userId: string): Promise<{ user: User; university: University | null }> {
     return await this.userDomainService.getUserWithUniversity(userId);
   }
 }

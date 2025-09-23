@@ -16,14 +16,14 @@ export class DynamoDbUserRepository implements IUserRepository {
     });
   }
 
-  public async findById(id: number): Promise<User | null> {
+  public async findById(id: string): Promise<User | null> {
     const res = await this.doc.send(new GetCommand({
       TableName: this.tableName,
-      Key: { id: id.toString() }
+      Key: { id }
     }));
     const item = res.Item as any;
     if (!item) return null;
-    return User.fromDatabase(parseInt(item.id), item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
+    return User.fromDatabase(item.id, item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
   }
 
   public async findByEmail(email: string): Promise<User | null> {
@@ -38,12 +38,12 @@ export class DynamoDbUserRepository implements IUserRepository {
     const items = (res.Items as any[]) || [];
     const item = items[0];
     if (!item) return null;
-    return User.fromDatabase(parseInt(item.id), item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
+    return User.fromDatabase(item.id, item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
   }
 
   public async create(user: User): Promise<User> {
     // Simple numeric id generation via timestamp; in prod prefer ULID/UUID
-    const id = user.id ? user.id.toString() : Date.now().toString();
+    const id = user.id || Date.now().toString();
     const item: any = {
       id,
       email: user.email,
@@ -57,32 +57,32 @@ export class DynamoDbUserRepository implements IUserRepository {
       Item: item,
       ConditionExpression: 'attribute_not_exists(id)'
     }));
-    return User.fromDatabase(parseInt(id), item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
+    return User.fromDatabase(id, item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
   }
 
-  public async update(id: number, userData: Partial<Pick<User, 'universityId'>>): Promise<User> {
+  public async update(id: string, userData: Partial<Pick<User, 'universityId'>>): Promise<User> {
     const res = await this.doc.send(new UpdateCommand({
       TableName: this.tableName,
-      Key: { id: id.toString() },
+      Key: { id },
       UpdateExpression: 'SET universityId = :u',
       ExpressionAttributeValues: { ':u': userData.universityId !== undefined && userData.universityId !== null ? userData.universityId.toString() : null },
       ReturnValues: 'ALL_NEW'
     }));
     const item = res.Attributes as any;
     if (!item) throw new Error('User not found for update');
-    return User.fromDatabase(parseInt(item.id), item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
+    return User.fromDatabase(item.id, item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt);
   }
 
-  public async delete(id: number): Promise<void> {
+  public async delete(id: string): Promise<void> {
     await this.doc.send(new DeleteCommand({
       TableName: this.tableName,
-      Key: { id: id.toString() }
+      Key: { id }
     }));
   }
 
   public async findAll(): Promise<User[]> {
     const res = await this.doc.send(new ScanCommand({ TableName: this.tableName }));
     const items = (res.Items as any[]) || [];
-    return items.map((item: any) => User.fromDatabase(parseInt(item.id), item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt));
+    return items.map((item: any) => User.fromDatabase(item.id, item.email, item.universityId ? parseInt(item.universityId) : undefined, item.createdAt));
   }
 }

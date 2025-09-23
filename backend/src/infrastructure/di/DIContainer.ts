@@ -6,10 +6,10 @@ import * as path from 'path';
 import { UserDomainService } from '../../domain/services/UserDomainService';
 
 // Use Cases
-import { 
-  AuthenticateUserUseCase, 
-  GetUniversitiesUseCase, 
-  GetUserDashboardUseCase 
+import {
+    AuthenticateUserUseCase,
+    GetUniversitiesUseCase,
+    GetUserDashboardUseCase
 } from '../../application/useCases';
 
 // Infrastructure
@@ -17,7 +17,7 @@ import { DynamoDbUserRepository } from '../repositories/DynamoDbUserRepository';
 import { JsonUniversityRepository } from '../repositories/JsonUniversityRepository';
 
 // Repository Interfaces
-import { IUserRepository, IUniversityRepository } from '../../domain/repositories/interfaces';
+import { IUniversityRepository, IUserRepository } from '../../domain/repositories/interfaces';
 
 export class DIContainer {
   private static instance: DIContainer;

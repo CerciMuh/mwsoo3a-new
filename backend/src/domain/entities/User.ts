@@ -1,7 +1,7 @@
 // Domain Entity: User
 export class User {
   constructor(
-    public readonly id: number | undefined,
+    public readonly id: string,
     public readonly email: string,
     public readonly universityId: number | null,
     public readonly createdAt: Date | undefined
@@ -21,15 +21,15 @@ export class User {
     }
 
     return new User(
-      undefined, // id will be set by database
+      '', // id will be set by database
       email.toLowerCase(),
       universityId || null,
       undefined // createdAt will be set by database
     );
   }
 
-  public static fromDatabase(id: number, email: string, universityId?: number | null, createdAt?: string): User {
-    const date = createdAt ? new Date(createdAt) : undefined;
-    return new User(id, email, universityId || null, date);
+  public static fromDatabase(id: string, email: string, universityId?: number | null, createdAt?: string | Date): User {
+    const created = createdAt ? (typeof createdAt === 'string' ? new Date(createdAt) : createdAt) : undefined;
+    return new User(id, email, universityId || null, created);
   }
 }

@@ -24,8 +24,7 @@
     "solid-principles",
     "nodejs",
     "typescript",
-    "express",
-    "sqlite"
+    "express"
   ],
   "author": "MWSOO3A Team",
   "license": "MIT",
